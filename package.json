@@ -11,6 +11,8 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "marked": "^0.7.0",
+    "read-markdown": "^1.0.2",
     "youtube-dl": "^2.0.2"
   }
 }

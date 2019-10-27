@@ -1,6 +1,6 @@
 const fs = require("fs");
 const youtubedl = require("youtube-dl");
-const videoUrlArr = ["watch?v=yNu4aLCUb08"];
+const { getFilesToDownload } = require("./markdown-reader");
 
 const videoInfo = video => {
   return new Promise((resolve, reject) => {
@@ -13,6 +13,14 @@ const videoInfo = video => {
     });
   });
 };
+const videoDownloadComplete = (video, filename) => {
+  return new Promise(resolve => {
+    video.on("end", () => {
+      return resolve(`100% ${filename}`);
+    });
+  });
+};
+
 const asyncDownload = async videoUrl => {
   try {
     const video = youtubedl(
@@ -22,22 +30,33 @@ const asyncDownload = async videoUrl => {
     );
     const info = await videoInfo(video);
     video.pipe(fs.createWriteStream(`videos/${info._filename}.mp4`));
-    return "";
+    return await videoDownloadComplete(video, info._filename);
   } catch (err) {
+    console.log(err);
     throw err;
   }
 };
-const init = arrOfVideos => {
-  const promiseArr = arrOfVideos.map(e => {
-    return asyncDownload(arrOfVideos);
-  });
-  Promise.all(promiseArr)
-    .then(res => {
-      console.log("all done");
+const init = () => {
+  getFilesToDownload("download.md")
+    .then(arrOfVideos => {
+      console.log("input video length", arrOfVideos.length);
+      let i = 0;
+      for (let video of arrOfVideos) {
+        asyncDownload(video)
+          .then(res => {
+            if (res) {
+              i = i + 1;
+            }
+            console.log("downloaded videos", i);
+          })
+          .catch(err => {
+            console.log(err);
+          });
+      }
     })
     .catch(err => {
-      console.log(err);
+      console.log("error", err);
     });
 };
 
-init(videoUrlArr);
+init();
